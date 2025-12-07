@@ -16,6 +16,18 @@ function formatCurrency(valor: number | undefined) {
   });
 }
 
+const STATUS_CLASS: Record<"entregue" | "finalizada" | "cancelada", string> = {
+  entregue: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  finalizada: "bg-blue-50 text-blue-700 border-blue-200",
+  cancelada: "bg-rose-50 text-rose-700 border-rose-200",
+};
+
+const STATUS_LABEL: Record<"entregue" | "finalizada" | "cancelada", string> = {
+  entregue: "Entregue",
+  finalizada: "Finalizada",
+  cancelada: "Cancelada",
+};
+
 export default function ClientHistory() {
   const { orders } = useOrders();
 
@@ -87,48 +99,51 @@ export default function ClientHistory() {
               </thead>
 
               <tbody>
-                {historico.map((os, index) => (
-                  <tr
-                    key={os.id}
-                    className={
-                      "border-t border-slate-800 hover:bg-slate-800/50 transition " +
-                      (index % 2 === 1 ? "bg-slate-900/40" : "")
-                    }
-                  >
-                    <td className="px-4 py-3 font-mono text-xs text-slate-100">
-                      {os.numero}
-                    </td>
+                {historico.map((os, index) => {
+                  const key =
+                    os.status === "entregue"
+                      ? "entregue"
+                      : os.status === "cancelada"
+                      ? "cancelada"
+                      : "finalizada";
 
-                    <td className="px-4 py-3">
-                      <span
-                        className={
-                          "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold border " +
-                          (os.status === "entregue"
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                            : os.status === "cancelada"
-                            ? "bg-rose-50 text-rose-700 border-rose-200"
-                            : "bg-blue-50 text-blue-700 border-blue-200")
-                        }
-                      >
-                        {os.status === "entregue" && "Entregue"}
-                        {os.status === "finalizada" && "Finalizada"}
-                        {os.status === "cancelada" && "Cancelada"}
-                      </span>
-                    </td>
+                  return (
+                    <tr
+                      key={os.id}
+                      className={
+                        "border-t border-slate-800 hover:bg-slate-800/50 transition " +
+                        (index % 2 === 1 ? "bg-slate-900/40" : "")
+                      }
+                    >
+                      <td className="px-4 py-3 font-mono text-xs text-slate-100">
+                        {os.numero}
+                      </td>
 
-                    <td className="px-4 py-3 text-slate-300">
-                      {formatDate(os.dataAbertura)}
-                    </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={
+                            "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold border " +
+                            STATUS_CLASS[key]
+                          }
+                        >
+                          {STATUS_LABEL[key]}
+                        </span>
+                      </td>
 
-                    <td className="px-4 py-3 text-slate-300">
-                      {formatDate(os.dataConclusao)}
-                    </td>
+                      <td className="px-4 py-3 text-slate-300">
+                        {formatDate(os.dataAbertura)}
+                      </td>
 
-                    <td className="px-4 py-3 font-medium text-slate-50">
-                      {formatCurrency(os.totalFinal)}
-                    </td>
-                  </tr>
-                ))}
+                      <td className="px-4 py-3 text-slate-300">
+                        {formatDate(os.dataConclusao)}
+                      </td>
+
+                      <td className="px-4 py-3 font-medium text-slate-50">
+                        {formatCurrency(os.totalFinal)}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

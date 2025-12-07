@@ -15,7 +15,7 @@ type MenuItem = {
 
 export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
   const location = useLocation();
-  const {} = useAuth();
+  const { logout } = useAuth();
 
   const adminMenu: MenuItem[] = [
     { to: "/adm", label: "Painel" },
@@ -51,6 +51,11 @@ export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
     if (!current) return item;
     return item.to.length > current.to.length ? item : current;
   }, null);
+
+  function handleLogout() {
+    logout();
+    onClose();
+  }
 
   return (
     <>
@@ -113,7 +118,47 @@ export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
           })}
         </nav>
 
-        {/* Rodapé - SEM botão sair agora */}
+        {/* Rodapé - botão sair */}
+        <div className="border-t border-slate-800/60 px-3 py-3">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full inline-flex items-center justify-center gap-2 
+              rounded-lg border border-slate-700 bg-slate-900/80 
+              px-3 py-2 text-sm text-slate-100 
+              hover:bg-slate-800 hover:border-slate-500 
+              active:scale-[0.98] transition"
+          >
+            <span>Sair</span>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M9 6H7.5C6.7 6 6 6.7 6 7.5v9c0 .8.7 1.5 1.5 1.5H9"
+                stroke="#e2e8f0"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+              />
+              <path
+                d="M10 12h9"
+                stroke="#e2e8f0"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+              />
+              <path
+                d="M16 9l3 3-3 3"
+                stroke="#e2e8f0"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
       </aside>
     </>
   );

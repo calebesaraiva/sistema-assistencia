@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useOrders } from "../../context/OrdersContext";
 import type { OrderStatus } from "../../types/domain";
+import { toast } from "../../utils/toast"; // <= garante que esse util existe
 
 function formatDate(dateStr?: string) {
   if (!dateStr) return "-";
@@ -62,6 +63,7 @@ export default function TechOrders() {
 
   const [statusFilter, setStatusFilter] = useState<"" | OrderStatus>("");
   const [search, setSearch] = useState("");
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
 
   const filteredOrders = useMemo(() => {
     return orders.filter((os) => {
@@ -83,8 +85,20 @@ export default function TechOrders() {
     });
   }, [orders, clients, devices, statusFilter, search]);
 
-  function handleStatus(orderId: string, status: OrderStatus) {
-    updateOrderStatus(orderId, status);
+  async function handleStatus(orderId: string, status: OrderStatus) {
+    // evita clique duplo na mesma OS
+    if (updatingOrderId) return;
+
+    try {
+      setUpdatingOrderId(orderId);
+      await updateOrderStatus(orderId, status);
+      toast.success("Status da OS atualizado com sucesso!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Não foi possível atualizar o status. Tente novamente.");
+    } finally {
+      setUpdatingOrderId(null);
+    }
   }
 
   return (

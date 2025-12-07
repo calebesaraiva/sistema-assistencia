@@ -1,15 +1,33 @@
+import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { toast } from "../../utils/toast";
 
 export default function Login() {
   const { loginAs } = useAuth();
   const navigate = useNavigate();
 
-  function handleLogin(role: "cliente" | "tecnico" | "adm") {
-    loginAs(role);
-    if (role === "cliente") navigate("/cliente");
-    if (role === "tecnico") navigate("/tecnico");
-    if (role === "adm") navigate("/adm");
+  const [loading, setLoading] = useState<"cliente" | "tecnico" | "adm" | null>(null);
+
+  async function handleLogin(role: "cliente" | "tecnico" | "adm") {
+    if (loading) return; // bloqueia spam de clique
+    setLoading(role);
+
+    try {
+      await new Promise((res) => setTimeout(res, 600)); // simula login suave
+
+      loginAs(role);
+
+      toast.success(`Bem-vindo! Perfil "${role}" ativado.`);
+
+      if (role === "cliente") navigate("/cliente");
+      if (role === "tecnico") navigate("/tecnico");
+      if (role === "adm") navigate("/adm");
+    } catch {
+      toast.error("Erro ao entrar. Tente novamente.");
+    } finally {
+      setLoading(null);
+    }
   }
 
   return (
@@ -33,46 +51,52 @@ export default function Login() {
 
           <div className="flex flex-col gap-3">
 
-            {/* CLIENTE — corrigido */}
+            {/* CLIENTE */}
             <button
               onClick={() => handleLogin("cliente")}
+              disabled={loading !== null}
               className="
                 w-full rounded-xl px-4 py-3 text-sm font-medium text-slate-50
                 bg-gradient-to-r from-sky-500 to-indigo-500
                 hover:brightness-110 hover:shadow-lg hover:shadow-sky-500/30
                 active:scale-[0.98]
                 transition-all duration-150
+                disabled:opacity-60 disabled:cursor-not-allowed
               "
             >
-              Entrar como Cliente
+              {loading === "cliente" ? "Entrando..." : "Entrar como Cliente"}
             </button>
 
             {/* TÉCNICO */}
             <button
               onClick={() => handleLogin("tecnico")}
+              disabled={loading !== null}
               className="
                 w-full rounded-xl px-4 py-3 text-sm font-medium text-slate-100
                 border border-slate-600/70 bg-slate-900/40
                 hover:bg-slate-800/70 hover:border-slate-400/80
                 hover:-translate-y-[1px] active:scale-[0.98]
                 transition-all duration-150
+                disabled:opacity-50 disabled:cursor-not-allowed
               "
             >
-              Entrar como Técnico
+              {loading === "tecnico" ? "Entrando..." : "Entrar como Técnico"}
             </button>
 
             {/* ADM */}
             <button
               onClick={() => handleLogin("adm")}
+              disabled={loading !== null}
               className="
                 w-full rounded-xl px-4 py-3 text-sm font-medium text-slate-100
                 border border-slate-600/70 bg-slate-900/40
                 hover:bg-slate-800/70 hover:border-slate-400/80
                 hover:-translate-y-[1px] active:scale-[0.98]
                 transition-all duration-150
+                disabled:opacity-50 disabled:cursor-not-allowed
               "
             >
-              Entrar como Administrador
+              {loading === "adm" ? "Entrando..." : "Entrar como Administrador"}
             </button>
 
           </div>

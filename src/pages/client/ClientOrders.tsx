@@ -1,6 +1,7 @@
 import { useOrders } from "../../context/OrdersContext";
 
-const statusLabels: Record<string, string> = {
+// Mapeamento de labels
+const STATUS_LABEL: Record<string, string> = {
   aberta: "Aberta",
   em_andamento: "Em andamento",
   aguardando_aprovacao: "Aguardando aprovação",
@@ -10,32 +11,28 @@ const statusLabels: Record<string, string> = {
   cancelada: "Cancelada",
 };
 
+// Cores de status (padronizadas)
+const STATUS_COLOR: Record<string, string> = {
+  entregue: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  cancelada: "bg-rose-50 text-rose-700 border-rose-200",
+  finalizada: "bg-blue-50 text-blue-700 border-blue-200",
+  aguardando_peca: "bg-violet-50 text-violet-700 border-violet-200",
+  aguardando_aprovacao: "bg-amber-50 text-amber-700 border-amber-200",
+  em_andamento: "bg-sky-50 text-sky-700 border-sky-200",
+  default: "bg-slate-50 text-slate-700 border-slate-200",
+};
+
+// Função utilitária para pegar cor do status
+function getStatusColor(status: string) {
+  return STATUS_COLOR[status] ?? STATUS_COLOR.default;
+}
+
 export default function ClientOrders() {
   const { orders, devices } = useOrders();
 
-  function getDeviceLabel(deviceId: string) {
-    const d = devices.find((d) => d.id === deviceId);
-    if (!d) return "—";
-    return `${d.tipo} ${d.marca} ${d.modelo}`;
-  }
-
-  function getStatusColor(status: string) {
-    switch (status) {
-      case "entregue":
-        return "bg-emerald-50 text-emerald-700 border-emerald-200";
-      case "cancelada":
-        return "bg-rose-50 text-rose-700 border-rose-200";
-      case "finalizada":
-        return "bg-blue-50 text-blue-700 border-blue-200";
-      case "aguardando_peca":
-        return "bg-violet-50 text-violet-700 border-violet-200";
-      case "aguardando_aprovacao":
-        return "bg-amber-50 text-amber-700 border-amber-200";
-      case "em_andamento":
-        return "bg-sky-50 text-sky-700 border-sky-200";
-      default:
-        return "bg-slate-50 text-slate-700 border-slate-200";
-    }
+  function getDeviceLabel(id: string) {
+    const d = devices.find((x) => x.id === id);
+    return d ? `${d.tipo} ${d.marca} ${d.modelo}` : "—";
   }
 
   return (
@@ -59,7 +56,7 @@ export default function ClientOrders() {
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              {/* Cabeçalho da tabela */}
+              {/* Cabeçalho */}
               <thead className="bg-slate-800/60 border-b border-slate-700 text-slate-300 text-xs uppercase tracking-wide">
                 <tr>
                   <th className="px-4 py-3 text-left">Nº OS</th>
@@ -100,7 +97,7 @@ export default function ClientOrders() {
                           getStatusColor(os.status)
                         }
                       >
-                        {statusLabels[os.status]}
+                        {STATUS_LABEL[os.status]}
                       </span>
                     </td>
 

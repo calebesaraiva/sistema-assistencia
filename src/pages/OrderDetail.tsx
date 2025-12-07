@@ -4,6 +4,7 @@ import type { FormEvent } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useOrders } from "../context/OrdersContext";
 import type { OrderStatus, PaymentStatus } from "../types/domain";
+import { toast } from "../utils/toast"; // <= garante que esse caminho existe
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -66,43 +67,78 @@ export default function OrderDetail() {
 
   const restante = Math.max(totalOs - (valorPagoLocal || 0), 0);
 
-// ---------------- handlers ----------------
-function handleSalvarStatus() {
-  if (!ordem) {
-    alert("Ordem não encontrada.");
-    return;
+  // flags de loading (não uso disabled pra não mexer no visual)
+  const [savingStatus, setSavingStatus] = useState(false);
+  const [savingLaudo, setSavingLaudo] = useState(false);
+  const [savingPayment, setSavingPayment] = useState(false);
+
+  // ---------------- handlers ----------------
+  async function handleSalvarStatus() {
+    if (savingStatus) return;
+
+    if (!ordem) {
+      toast.error("Ordem não encontrada.");
+      return;
+    }
+
+    try {
+      setSavingStatus(true);
+      await updateOrderStatus(ordem.id, statusLocal);
+      toast.success("Status atualizado com sucesso!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Não foi possível atualizar o status. Tente novamente.");
+    } finally {
+      setSavingStatus(false);
+    }
   }
 
-  updateOrderStatus(ordem.id, statusLocal);
-  alert("Status atualizado!");
-}
+  async function handleSalvarLaudo() {
+    if (savingLaudo) return;
 
-function handleSalvarLaudo() {
-  if (!ordem) {
-    alert("Ordem não encontrada.");
-    return;
+    if (!ordem) {
+      toast.error("Ordem não encontrada.");
+      return;
+    }
+
+    try {
+      setSavingLaudo(true);
+      await updateOrderLaudo(ordem.id, laudoLocal);
+      toast.success("Laudo atualizado com sucesso!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Não foi possível atualizar o laudo. Tente novamente.");
+    } finally {
+      setSavingLaudo(false);
+    }
   }
 
-  updateOrderLaudo(ordem.id, laudoLocal);
-  alert("Laudo atualizado!");
-}
+  async function handleSalvarPagamento(e?: FormEvent) {
+    e?.preventDefault();
+    if (savingPayment) return;
 
-function handleSalvarPagamento(e?: FormEvent) {
-  e?.preventDefault();
+    if (!ordem) {
+      toast.error("Ordem não encontrada.");
+      return;
+    }
 
-  if (!ordem) {
-    alert("Ordem não encontrada.");
-    return;
+    try {
+      setSavingPayment(true);
+
+      await updateOrderPayment(ordem.id, {
+        statusPagamento: statusPagamentoLocal,
+        formaPagamento: formaPagamentoLocal || undefined,
+        valorPago: valorPagoLocal,
+      });
+
+      toast.success("Pagamento atualizado com sucesso!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Não foi possível atualizar o pagamento. Tente novamente.");
+    } finally {
+      setSavingPayment(false);
+    }
   }
-
-  updateOrderPayment(ordem.id, {
-    statusPagamento: statusPagamentoLocal,
-    formaPagamento: formaPagamentoLocal || undefined,
-    valorPago: valorPagoLocal,
-  });
-
-  alert("Pagamento atualizado!");
-}
 
   const badgeStatus: Record<OrderStatus, string> = {
     aberta: "bg-sky-500/10 text-sky-300 border-sky-500/40",
@@ -115,6 +151,15 @@ function handleSalvarPagamento(e?: FormEvent) {
     entregue: "bg-emerald-500/10 text-emerald-300 border-emerald-500/40",
     cancelada: "bg-rose-500/10 text-rose-300 border-rose-500/40",
   };
+
+  // ----- logs ordenados (mais recente em cima) -----
+  const logsOrdenados = (ordem.logs ?? [])
+    .slice()
+    .sort((a, b) => b.dataHora.localeCompare(a.dataHora));
+
+  function formatAcaoLabel(acao: string) {
+    return acao.replaceAll("_", " ");
+  }
 
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-8 text-slate-50">
@@ -375,9 +420,7 @@ function handleSalvarPagamento(e?: FormEvent) {
                   step="0.01"
                   className="w-full border border-slate-600 rounded-md px-3 py-2 text-sm bg-slate-950/60 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                   value={valorPagoLocal}
-                  onChange={(e) =>
-                    setValorPagoLocal(Number(e.target.value))
-                  }
+                  onChange={(e) => setValorPagoLocal(Number(e.target.value))}
                 />
 
                 <p className="mt-1 text-xs text-slate-300">
@@ -428,6 +471,46 @@ function handleSalvarPagamento(e?: FormEvent) {
               </span>
             </div>
           </div>
+
+          {/* Histórico da OS */}
+          {logsOrdenados.length > 0 && (
+            <div className="bg-slate-900/60 rounded-xl border border-slate-700 shadow-sm p-4">
+              <h2 className="text-sm font-semibold text-slate-200 mb-3">
+                Histórico da OS
+              </h2>
+
+              <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                {logsOrdenados.map((log) => (
+                  <div
+                    key={log.id}
+                    className="border border-slate-700/70 rounded-lg px-3 py-2 bg-slate-950/60"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-medium text-slate-200 uppercase tracking-wide">
+                        {formatAcaoLabel(log.acao)}
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        {new Date(log.dataHora).toLocaleString("pt-BR")}
+                      </span>
+                    </div>
+
+                    <p className="mt-1 text-xs text-slate-300">
+                      {log.descricao}
+                    </p>
+
+                    {log.usuarioId && (
+                      <p className="mt-1 text-[10px] text-slate-500">
+                        Registrado por:{" "}
+                        {log.usuarioId === "sistema"
+                          ? "Sistema"
+                          : log.usuarioId}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

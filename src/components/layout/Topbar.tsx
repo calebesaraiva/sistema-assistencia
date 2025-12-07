@@ -5,7 +5,7 @@ interface TopbarProps {
 }
 
 export default function Topbar({ onToggleSidebar }: TopbarProps) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   const initials = user?.nome
     ? user.nome
@@ -64,7 +64,7 @@ export default function Topbar({ onToggleSidebar }: TopbarProps) {
           </div>
         </div>
 
-        {/* RIGHT - User + Logout */}
+        {/* RIGHT - User (sem botão sair) */}
         <div className="flex items-center gap-4">
           {/* Nome + cargo (desktop) */}
           <div className="hidden md:flex flex-col items-end leading-tight">
@@ -76,55 +76,12 @@ export default function Topbar({ onToggleSidebar }: TopbarProps) {
             </span>
           </div>
 
-          {/* Botão Sair */}
-{/* Botão Sair — agora visível no mobile também */}
-<button
-  onClick={logout}
-  className="
-    inline-flex items-center gap-2 
-    bg-white/5 border border-white/15 
-    px-3 py-1.5 rounded-lg 
-    text-sm text-slate-100 
-    hover:bg-white/10 active:scale-95 
-    transition
-  "
->
-  Sair
-  <svg
-    width="15"
-    height="15"
-    viewBox="0 0 24 24"
-    fill="none"
-    aria-hidden="true"
-  >
-    <path
-      d="M9 6H7.5C6.7 6 6 6.7 6 7.5v9c0 .8.7 1.5 1.5 1.5H9"
-      stroke="#e2e8f0"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-    />
-    <path
-      d="M10 12h9"
-      stroke="#e2e8f0"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-    />
-    <path
-      d="M16 9l3 3-3 3"
-      stroke="#e2e8f0"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-</button>
-
-
           {/* Avatar + nome (mobile) */}
           <div className="flex items-center gap-2">
             <span className="md:hidden text-[11px] text-slate-200 max-w-[120px] truncate">
               {user?.nome ?? "Usuário"}
             </span>
+
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-600 via-slate-800 to-slate-950 text-white flex items-center justify-center text-sm font-semibold shadow-md ring-1 ring-indigo-500/40 select-none">
               {initials}
             </div>

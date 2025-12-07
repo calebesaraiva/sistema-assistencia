@@ -1,3 +1,7 @@
+// src/pages/admin/AdminUsers.tsx
+import { useState } from "react";
+import { toast } from "../../utils/toast";
+
 type UserRole = "adm" | "tecnico" | "cliente";
 
 interface UserRow {
@@ -39,11 +43,36 @@ const roleLabel: Record<UserRole, string> = {
 };
 
 export default function AdminUsers() {
-  const total = MOCK_USERS.length;
+  const [users, setUsers] = useState<UserRow[]>(MOCK_USERS);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+
+  const total = users.length;
+
+  function handleToggleStatus(user: UserRow) {
+    if (loadingId) return; // evita spam de clique
+
+    setLoadingId(user.id);
+
+    // simula request assíncrona
+    setTimeout(() => {
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === user.id ? { ...u, ativo: !u.ativo } : u
+        )
+      );
+
+      toast.success(
+        user.ativo
+          ? `Usuário "${user.nome}" desativado.`
+          : `Usuário "${user.nome}" ativado.`
+      );
+
+      setLoadingId(null);
+    }, 500);
+  }
 
   return (
     <div className="p-4 md:p-6 space-y-8 max-w-5xl mx-auto">
-
       {/* Cabeçalho */}
       <header className="flex items-center justify-between">
         <div>
@@ -56,8 +85,10 @@ export default function AdminUsers() {
         </div>
 
         <div className="text-sm">
-          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full 
-            bg-slate-900/70 border border-slate-700 text-slate-100 shadow-sm">
+          <span
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full 
+            bg-slate-900/70 border border-slate-700 text-slate-100 shadow-sm"
+          >
             <span className="w-2 h-2 rounded-full bg-emerald-400" />
             {total} usuário(s)
           </span>
@@ -70,8 +101,10 @@ export default function AdminUsers() {
         backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,0.65)] overflow-hidden"
       >
         {/* Cabeçalho tabela */}
-        <div className="border-b border-slate-800/80 px-4 py-3 text-xs font-semibold 
-          text-slate-400 uppercase tracking-wide grid grid-cols-12">
+        <div
+          className="border-b border-slate-800/80 px-4 py-3 text-xs font-semibold 
+          text-slate-400 uppercase tracking-wide grid grid-cols-12"
+        >
           <div className="col-span-3">Nome</div>
           <div className="col-span-5">E-mail</div>
           <div className="col-span-2">Perfil</div>
@@ -80,7 +113,7 @@ export default function AdminUsers() {
 
         {/* Linhas */}
         <ul className="divide-y divide-slate-800/80">
-          {MOCK_USERS.map((u) => (
+          {users.map((u) => (
             <li
               key={u.id}
               className="px-4 py-4 text-sm grid grid-cols-12 items-center 
@@ -106,24 +139,39 @@ export default function AdminUsers() {
                 </span>
               </div>
 
-              {/* Status */}
+              {/* Status + ação */}
               <div className="col-span-2 text-right">
-                <span
-                  className={
-                    "inline-flex items-center px-3 py-1 rounded-full text-xs border " +
-                    (u.ativo
-                      ? "bg-emerald-900/40 text-emerald-300 border-emerald-600"
-                      : "bg-slate-900 text-slate-400 border-slate-700")
-                  }
-                >
+                <div className="inline-flex flex-col items-end gap-1">
                   <span
                     className={
-                      "w-1.5 h-1.5 rounded-full mr-1.5 " +
-                      (u.ativo ? "bg-emerald-400" : "bg-slate-500")
+                      "inline-flex items-center px-3 py-1 rounded-full text-xs border " +
+                      (u.ativo
+                        ? "bg-emerald-900/40 text-emerald-300 border-emerald-600"
+                        : "bg-slate-900 text-slate-400 border-slate-700")
                     }
-                  />
-                  {u.ativo ? "Ativo" : "Inativo"}
-                </span>
+                  >
+                    <span
+                      className={
+                        "w-1.5 h-1.5 rounded-full mr-1.5 " +
+                        (u.ativo ? "bg-emerald-400" : "bg-slate-500")
+                      }
+                    />
+                    {u.ativo ? "Ativo" : "Inativo"}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => handleToggleStatus(u)}
+                    disabled={loadingId === u.id}
+                    className="text-[11px] text-slate-400 hover:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loadingId === u.id
+                      ? "Atualizando..."
+                      : u.ativo
+                      ? "Desativar"
+                      : "Ativar"}
+                  </button>
+                </div>
               </div>
             </li>
           ))}
@@ -132,8 +180,8 @@ export default function AdminUsers() {
 
       {/* Rodapé */}
       <p className="text-xs text-slate-500">
-        * Nesta versão os usuários estão fixos no frontend apenas para teste visual.
-        Depois podemos integrar com API, cadastro e permissões reais.
+        * Nesta versão os usuários estão fixos no frontend apenas para teste
+        visual. Depois podemos integrar com API, cadastro e permissões reais.
       </p>
     </div>
   );

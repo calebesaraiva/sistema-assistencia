@@ -3,10 +3,21 @@ import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useOrders } from "../context/OrdersContext";
 
+function formatDate(iso?: string) {
+  if (!iso) return "-";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "-";
+  return d.toLocaleDateString("pt-BR");
+}
+
+function formatMoney(value: number) {
+  return value.toFixed(2);
+}
+
 export default function OrderPrint() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { orders, clients, devices, } = useOrders();
+  const { orders, clients, devices } = useOrders();
 
   const ordem = useMemo(
     () => orders.find((o) => o.id === id || o.numero === id),
@@ -38,13 +49,8 @@ export default function OrderPrint() {
   const valorPago = ordem.valorPago ?? 0;
   const restante = Math.max(totalOs - valorPago, 0);
 
-  const dataAbertura = ordem.dataAbertura
-    ? new Date(ordem.dataAbertura).toLocaleDateString("pt-BR")
-    : "-";
-
-  const dataPrevisao = ordem.dataPrevisao
-    ? new Date(ordem.dataPrevisao).toLocaleDateString("pt-BR")
-    : "-";
+  const dataAbertura = formatDate(ordem.dataAbertura);
+  const dataPrevisao = formatDate(ordem.dataPrevisao);
 
   function handlePrint() {
     window.print();
@@ -56,11 +62,18 @@ export default function OrderPrint() {
       <div className="max-w-3xl mx-auto mb-4 px-4 print:hidden">
         <div className="flex items-center justify-between gap-2">
           <button
-            onClick={() => navigate(-1)}
-            className="px-3 py-2 text-sm border border-slate-300 rounded-md bg-white hover:bg-slate-50"
-          >
-            Voltar
-          </button>
+  onClick={() => navigate(-1)}
+  className="
+    px-4 py-2 text-sm font-medium rounded-lg
+    bg-slate-200 text-slate-700
+    border border-slate-300
+    hover:bg-slate-300 hover:text-slate-900
+    active:scale-95 transition
+  "
+>
+  ← Voltar
+</button>
+
           <button
             onClick={handlePrint}
             className="px-4 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700"
@@ -211,51 +224,54 @@ export default function OrderPrint() {
           </h2>
           <table className="w-full text-[12px] border border-slate-200 border-collapse">
             <thead>
-              <tr className="bg-slate-50">
-                <th className="border border-slate-200 px-2 py-1 text-left">
-                  Descrição
-                </th>
-                <th className="border border-slate-200 px-2 py-1 text-right">
-                  Valor (R$)
-                </th>
-              </tr>
+<tr className="bg-slate-200">
+  <th className="border border-slate-300 px-2 py-2 text-left text-[12px] font-semibold text-slate-900">
+    Descrição
+  </th>
+  <th className="border border-slate-300 px-2 py-2 text-right text-[12px] font-semibold text-slate-900">
+    Valor (R$)
+  </th>
+</tr>
+
             </thead>
-            <tbody>
-              {ordem.itens.map((item, index) => (
-                <tr
-                  key={item.id}
-                  className={index % 2 === 1 ? "bg-slate-50/70" : "bg-white"}
-                >
-                  <td className="border border-slate-200 px-2 py-1">
-                    {item.descricao}
-                  </td>
-                  <td className="border border-slate-200 px-2 py-1 text-right">
-                    {item.valor.toFixed(2)}
-                  </td>
-                </tr>
-              ))}
-              <tr className="bg-slate-50">
-                <td className="border border-slate-200 px-2 py-1 text-right font-semibold">
-                  Total
-                </td>
-                <td className="border border-slate-200 px-2 py-1 text-right font-semibold">
-                  {totalOs.toFixed(2)}
-                </td>
-              </tr>
-            </tbody>
+<tbody>
+  {ordem.itens.map((item, index) => (
+    <tr
+      key={item.id}
+      className={index % 2 === 1 ? "bg-slate-50" : "bg-white"}
+    >
+      <td className="border border-slate-300 px-2 py-1 text-slate-800 font-medium">
+        {item.descricao}
+      </td>
+      <td className="border border-slate-300 px-2 py-1 text-right text-slate-900 font-semibold">
+        {formatMoney(item.valor)}
+      </td>
+    </tr>
+  ))}
+
+  <tr className="bg-slate-200">
+    <td className="border border-slate-300 px-2 py-1 text-right font-semibold text-slate-900">
+      Total
+    </td>
+    <td className="border border-slate-300 px-2 py-1 text-right font-semibold text-slate-900">
+      {formatMoney(totalOs)}
+    </td>
+  </tr>
+</tbody>
+
           </table>
 
           <div className="mt-2 text-[12px] text-slate-800 flex justify-between">
             <span>
               Valor pago:{" "}
               <span className="font-semibold">
-                R$ {valorPago.toFixed(2)}
+                R$ {formatMoney(valorPago)}
               </span>
             </span>
             <span>
               Restante:{" "}
               <span className="font-semibold">
-                R$ {restante.toFixed(2)}
+                R$ {formatMoney(restante)}
               </span>
             </span>
           </div>

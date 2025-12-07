@@ -1,9 +1,11 @@
 // src/pages/admin/AdminClients.tsx
 import { useState } from "react";
 import { useOrders } from "../../context/OrdersContext";
+import { useUiFeedback } from "../../hooks/useUiFeedback";
 
 export default function AdminClients() {
   const { clients, devices, createClient, createDevice } = useOrders();
+  const { showToast, withLoading } = useUiFeedback();
 
   // Estados do novo cliente
   const [nome, setNome] = useState("");
@@ -25,66 +27,104 @@ export default function AdminClients() {
   const [userEmail, setUserEmail] = useState("");
   const [userRole, setUserRole] = useState("cliente");
 
+  // loading dos botões
+  const [isSavingClient, setIsSavingClient] = useState(false);
+  const [isSavingDevice, setIsSavingDevice] = useState(false);
+  const [isSavingUser, setIsSavingUser] = useState(false);
+
   // --------- Ações ---------
-  function handleSaveClient() {
+  async function handleSaveClient() {
     if (!nome || !tel1) {
-      alert("Preencha nome e telefone principal.");
+      showToast("Preencha nome e telefone principal.", "error");
       return;
     }
 
-    createClient({
-      nome,
-      telefonePrincipal: tel1,
-      telefoneSecundario: tel2,
-      email,
-      cpfCnpj: cpf,
-    });
+    try {
+      await withLoading(setIsSavingClient, async () => {
+        createClient({
+          nome,
+          telefonePrincipal: tel1,
+          telefoneSecundario: tel2,
+          email,
+          cpfCnpj: cpf,
+        });
+      });
 
-    alert("Cliente cadastrado!");
-    setNome("");
-    setTel1("");
-    setTel2("");
-    setEmail("");
-    setCpf("");
+      showToast("Cliente cadastrado com sucesso!", "success");
+
+      setNome("");
+      setTel1("");
+      setTel2("");
+      setEmail("");
+      setCpf("");
+    } catch (err) {
+      console.error(err);
+      showToast("Erro ao cadastrar cliente. Tente novamente.", "error");
+    }
   }
 
-  function handleSaveDevice() {
+  async function handleSaveDevice() {
     if (!owner || !tipo || !marca || !modelo) {
-      alert("Preencha todos os campos obrigatórios do equipamento.");
+      showToast(
+        "Preencha todos os campos obrigatórios do equipamento.",
+        "error"
+      );
       return;
     }
 
-    createDevice({
-      clientId: owner,
-      tipo,
-      marca,
-      modelo,
-      cor,
-      imeiSerie: imei,
-    });
+    try {
+      await withLoading(setIsSavingDevice, async () => {
+        createDevice({
+          clientId: owner,
+          tipo,
+          marca,
+          modelo,
+          cor,
+          imeiSerie: imei,
+        });
+      });
 
-    alert("Equipamento cadastrado!");
+      showToast("Equipamento cadastrado com sucesso!", "success");
 
-    setTipo("");
-    setMarca("");
-    setModelo("");
-    setCor("");
-    setImei("");
+      setTipo("");
+      setMarca("");
+      setModelo("");
+      setCor("");
+      setImei("");
+    } catch (err) {
+      console.error(err);
+      showToast("Erro ao cadastrar equipamento. Tente novamente.", "error");
+    }
   }
 
-  function handleSaveUser() {
+  async function handleSaveUser() {
     if (!userNome || !userEmail) {
-      alert("Preencha nome e e-mail do usuário.");
+      showToast("Preencha nome e e-mail do usuário.", "error");
       return;
     }
 
-    // Aqui é só visual, sem salvar de verdade ainda
-    alert(
-      `Usuário criado (mock): ${userNome} - ${userEmail} - perfil: ${userRole}`
-    );
-    setUserNome("");
-    setUserEmail("");
-    setUserRole("cliente");
+    try {
+      await withLoading(setIsSavingUser, async () => {
+        // Apenas visual/mock por enquanto
+        console.log("Usuário mock:", {
+          userNome,
+          userEmail,
+          userRole,
+        });
+      });
+
+      showToast(
+        `Usuário mock criado: ${userNome} (${userRole})`,
+        "info"
+      );
+
+      setUserNome("");
+      setUserEmail("");
+      setUserRole("cliente");
+    } catch (err) {
+      console.error(err);
+      showToast("Erro ao criar usuário (mock).", "error");
+    }
   }
 
   // --------- JSX ---------
@@ -141,9 +181,10 @@ export default function AdminClients() {
 
           <button
             onClick={handleSaveClient}
-            className="w-full bg-gradient-to-r from-sky-500 to-indigo-500 text-white text-sm font-medium rounded-lg px-4 py-2 mt-1 hover:brightness-110 hover:shadow-lg hover:shadow-sky-500/30 active:scale-[0.98] transition"
+            disabled={isSavingClient}
+            className="w-full bg-gradient-to-r from-sky-500 to-indigo-500 text-white text-sm font-medium rounded-lg px-4 py-2 mt-1 hover:brightness-110 hover:shadow-lg hover:shadow-sky-500/30 active:scale-[0.98] transition disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Salvar cliente
+            {isSavingClient ? "Salvando..." : "Salvar cliente"}
           </button>
         </div>
 
@@ -199,9 +240,10 @@ export default function AdminClients() {
 
           <button
             onClick={handleSaveDevice}
-            className="w-full bg-slate-900 text-slate-50 text-sm font-medium rounded-lg px-4 py-2 mt-1 border border-slate-600 hover:bg-slate-800 hover:border-slate-400 active:scale-[0.98] transition"
+            disabled={isSavingDevice}
+            className="w-full bg-slate-900 text-slate-50 text-sm font-medium rounded-lg px-4 py-2 mt-1 border border-slate-600 hover:bg-slate-800 hover:border-slate-400 active:scale-[0.98] transition disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Salvar equipamento
+            {isSavingDevice ? "Salvando..." : "Salvar equipamento"}
           </button>
         </div>
 
@@ -235,9 +277,10 @@ export default function AdminClients() {
 
           <button
             onClick={handleSaveUser}
-            className="w-full bg-emerald-500 text-white text-sm font-medium rounded-lg px-4 py-2 mt-1 hover:bg-emerald-600 hover:shadow-lg hover:shadow-emerald-500/25 active:scale-[0.98] transition"
+            disabled={isSavingUser}
+            className="w-full bg-emerald-500 text-white text-sm font-medium rounded-lg px-4 py-2 mt-1 hover:bg-emerald-600 hover:shadow-lg hover:shadow-emerald-500/25 active:scale-[0.98] transition disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Criar usuário (mock)
+            {isSavingUser ? "Criando..." : "Criar usuário (mock)"}
           </button>
 
           <p className="text-xs text-slate-400 mt-1">
