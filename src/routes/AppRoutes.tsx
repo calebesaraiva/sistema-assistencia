@@ -28,7 +28,7 @@ import OrderDetail from "../pages/OrderDetail";
 import OrderPrint from "../pages/OrderPrint";
 
 interface PrivateRouteProps {
-  children: JSX.Element;
+  children: React.ReactNode;
   roles?: string[];
 }
 

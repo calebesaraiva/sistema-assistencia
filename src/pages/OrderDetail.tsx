@@ -1,5 +1,6 @@
 // src/pages/OrderDetail.tsx
-import { useState, useMemo, FormEvent } from "react";
+import { useState, useMemo } from "react";
+import type { FormEvent } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useOrders } from "../context/OrdersContext";
 import type { OrderStatus, PaymentStatus } from "../types/domain";
@@ -65,26 +66,43 @@ export default function OrderDetail() {
 
   const restante = Math.max(totalOs - (valorPagoLocal || 0), 0);
 
-  // ---------------- handlers ----------------
-  function handleSalvarStatus() {
-    updateOrderStatus(ordem.id, statusLocal);
-    alert("Status atualizado!");
+// ---------------- handlers ----------------
+function handleSalvarStatus() {
+  if (!ordem) {
+    alert("Ordem não encontrada.");
+    return;
   }
 
-  function handleSalvarLaudo() {
-    updateOrderLaudo(ordem.id, laudoLocal);
-    alert("Laudo atualizado!");
+  updateOrderStatus(ordem.id, statusLocal);
+  alert("Status atualizado!");
+}
+
+function handleSalvarLaudo() {
+  if (!ordem) {
+    alert("Ordem não encontrada.");
+    return;
   }
 
-  function handleSalvarPagamento(e?: FormEvent) {
-    e?.preventDefault();
-    updateOrderPayment(ordem.id, {
-      statusPagamento: statusPagamentoLocal,
-      formaPagamento: formaPagamentoLocal || undefined,
-      valorPago: valorPagoLocal,
-    });
-    alert("Pagamento atualizado!");
+  updateOrderLaudo(ordem.id, laudoLocal);
+  alert("Laudo atualizado!");
+}
+
+function handleSalvarPagamento(e?: FormEvent) {
+  e?.preventDefault();
+
+  if (!ordem) {
+    alert("Ordem não encontrada.");
+    return;
   }
+
+  updateOrderPayment(ordem.id, {
+    statusPagamento: statusPagamentoLocal,
+    formaPagamento: formaPagamentoLocal || undefined,
+    valorPago: valorPagoLocal,
+  });
+
+  alert("Pagamento atualizado!");
+}
 
   const badgeStatus: Record<OrderStatus, string> = {
     aberta: "bg-sky-500/10 text-sky-300 border-sky-500/40",

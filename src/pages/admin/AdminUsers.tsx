@@ -1,6 +1,3 @@
-// src/pages/admin/AdminUsers.tsx
-import React from "react";
-
 type UserRole = "adm" | "tecnico" | "cliente";
 
 interface UserRow {

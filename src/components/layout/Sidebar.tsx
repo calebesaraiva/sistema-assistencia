@@ -15,7 +15,7 @@ type MenuItem = {
 
 export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
   const location = useLocation();
-  const { logout } = useAuth();
+  const {} = useAuth();
 
   const adminMenu: MenuItem[] = [
     { to: "/adm", label: "Painel" },

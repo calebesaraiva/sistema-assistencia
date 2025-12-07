@@ -6,7 +6,7 @@ import { useOrders } from "../context/OrdersContext";
 export default function OrderPrint() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { orders, clients, devices, services } = useOrders();
+  const { orders, clients, devices, } = useOrders();
 
   const ordem = useMemo(
     () => orders.find((o) => o.id === id || o.numero === id),

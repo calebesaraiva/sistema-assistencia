@@ -160,7 +160,7 @@ export interface ServiceOrder {
 
   // Problema e laudo
   // CAMPO QUE O SISTEMA JÁ USA HOJE:
-  defeitoRelatado: string;
+  defeitoRelatado?: string;
   // Opcional extra, se quiser separar:
   defeitoRelatadoCliente?: string;
   defeitoConstatado?: string;
