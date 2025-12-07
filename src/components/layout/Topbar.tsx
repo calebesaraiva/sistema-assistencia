@@ -77,39 +77,48 @@ export default function Topbar({ onToggleSidebar }: TopbarProps) {
           </div>
 
           {/* Botão Sair */}
-          <button
-            onClick={logout}
-            className="hidden sm:inline-flex items-center gap-2 bg-white/5 border border-white/15 px-3 py-1.5 rounded-lg text-sm text-slate-100 hover:bg-white/10 active:scale-95 transition"
-          >
-            Sair
-            <svg
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden="true"
-            >
-              <path
-                d="M9 6H7.5C6.7 6 6 6.7 6 7.5v9c0 .8.7 1.5 1.5 1.5H9"
-                stroke="#e2e8f0"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-              />
-              <path
-                d="M10 12h9"
-                stroke="#e2e8f0"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-              />
-              <path
-                d="M16 9l3 3-3 3"
-                stroke="#e2e8f0"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
+{/* Botão Sair — agora visível no mobile também */}
+<button
+  onClick={logout}
+  className="
+    inline-flex items-center gap-2 
+    bg-white/5 border border-white/15 
+    px-3 py-1.5 rounded-lg 
+    text-sm text-slate-100 
+    hover:bg-white/10 active:scale-95 
+    transition
+  "
+>
+  Sair
+  <svg
+    width="15"
+    height="15"
+    viewBox="0 0 24 24"
+    fill="none"
+    aria-hidden="true"
+  >
+    <path
+      d="M9 6H7.5C6.7 6 6 6.7 6 7.5v9c0 .8.7 1.5 1.5 1.5H9"
+      stroke="#e2e8f0"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+    />
+    <path
+      d="M10 12h9"
+      stroke="#e2e8f0"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+    />
+    <path
+      d="M16 9l3 3-3 3"
+      stroke="#e2e8f0"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+</button>
+
 
           {/* Avatar + nome (mobile) */}
           <div className="flex items-center gap-2">
