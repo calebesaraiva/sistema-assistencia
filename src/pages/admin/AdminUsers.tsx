@@ -1,6 +1,6 @@
 // src/pages/admin/AdminUsers.tsx
 import { useState } from "react";
-import { toast } from "../../utils/toast";
+import { useUiFeedback } from "../../hooks/useUiFeedback";
 
 type UserRole = "adm" | "tecnico" | "cliente";
 
@@ -45,30 +45,43 @@ const roleLabel: Record<UserRole, string> = {
 export default function AdminUsers() {
   const [users, setUsers] = useState<UserRow[]>(MOCK_USERS);
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [isToggling, setIsToggling] = useState(false);
+  const { showToast, withLoading } = useUiFeedback();
 
   const total = users.length;
 
-  function handleToggleStatus(user: UserRow) {
+  async function handleToggleStatus(user: UserRow) {
     if (loadingId) return; // evita spam de clique
 
     setLoadingId(user.id);
 
-    // simula request assíncrona
-    setTimeout(() => {
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.id === user.id ? { ...u, ativo: !u.ativo } : u
-        )
-      );
+    try {
+      await withLoading(setIsToggling, async () => {
+        // aqui no futuro entra a chamada de API, ex:
+        // await api.patch(`/users/${user.id}/status`, { ativo: !user.ativo });
 
-      toast.success(
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.id === user.id ? { ...u, ativo: !u.ativo } : u
+          )
+        );
+
+        // se quiser manter um “delay fake” pra sentir o loading:
+        // await new Promise((resolve) => setTimeout(resolve, 500));
+      });
+
+      showToast(
         user.ativo
           ? `Usuário "${user.nome}" desativado.`
-          : `Usuário "${user.nome}" ativado.`
+          : `Usuário "${user.nome}" ativado.`,
+        "success"
       );
-
+    } catch (err) {
+      console.error(err);
+      showToast("Erro ao atualizar status do usuário. Tente novamente.", "error");
+    } finally {
       setLoadingId(null);
-    }, 500);
+    }
   }
 
   return (
@@ -162,7 +175,7 @@ export default function AdminUsers() {
                   <button
                     type="button"
                     onClick={() => handleToggleStatus(u)}
-                    disabled={loadingId === u.id}
+                    disabled={loadingId === u.id || isToggling}
                     className="text-[11px] text-slate-400 hover:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loadingId === u.id

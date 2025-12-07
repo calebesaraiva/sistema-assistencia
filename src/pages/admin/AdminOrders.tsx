@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useOrders } from "../../context/OrdersContext";
 import type { OrderStatus, PaymentStatus } from "../../types/domain";
-import { toast } from "../../utils/toast";
+import { useUiFeedback } from "../../hooks/useUiFeedback";
 
 const statusLabel: Record<OrderStatus, string> = {
   aberta: "Aberta",
@@ -53,6 +53,7 @@ function formatDate(iso?: string) {
 
 export default function AdminOrders() {
   const { orders, clients, devices } = useOrders();
+  const { showToast, withLoading } = useUiFeedback();
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] =
@@ -106,90 +107,88 @@ export default function AdminOrders() {
   }, [orders, clients, devices, search, statusFilter, paymentFilter]);
 
   // ===== EXPORTAR CSV =====
-  function handleExportCsv() {
+  async function handleExportCsv() {
     if (listaFiltrada.length === 0) {
-      toast.error("Não há OS na lista atual para exportar.");
+      showToast("Não há OS na lista atual para exportar.", "info");
       return;
     }
 
     try {
-      setIsExporting(true);
-
-      const header = [
-        "NumeroOS",
-        "StatusOS",
-        "StatusPagamento",
-        "ClienteNome",
-        "ClienteTelefone",
-        "Equipamento",
-        "ValorTotal",
-        "ValorPago",
-        "DataAbertura",
-        "DataConclusao",
-        "DataPagamento",
-      ];
-
-      const rows = listaFiltrada.map((os) => {
-        const cliente = clients.find((c) => c.id === os.clientId);
-        const device = devices.find((d) => d.id === os.deviceId);
-        const payStatus = os.statusPagamento ?? "nao_informado";
-        const equipamento = device
-          ? `${device.tipo ?? ""} ${device.marca ?? ""} ${
-              device.modelo ?? ""
-            }`.trim()
-          : "";
-
-        const total = os.totalFinal ?? os.subtotal ?? 0;
-        const valorPago = os.valorPago ?? 0;
-
-        return [
-          os.numero,
-          statusLabel[os.status],
-          payLabel[payStatus],
-          cliente?.nome ?? "",
-          cliente?.telefonePrincipal ?? "",
-          equipamento,
-          total.toString().replace(".", ","),
-          valorPago.toString().replace(".", ","),
-          formatDate(os.dataAbertura),
-          formatDate(os.dataConclusao),
-          formatDate(os.dataPagamento),
+      await withLoading(setIsExporting, async () => {
+        const header = [
+          "NumeroOS",
+          "StatusOS",
+          "StatusPagamento",
+          "ClienteNome",
+          "ClienteTelefone",
+          "Equipamento",
+          "ValorTotal",
+          "ValorPago",
+          "DataAbertura",
+          "DataConclusao",
+          "DataPagamento",
         ];
+
+        const rows = listaFiltrada.map((os) => {
+          const cliente = clients.find((c) => c.id === os.clientId);
+          const device = devices.find((d) => d.id === os.deviceId);
+          const payStatus = os.statusPagamento ?? "nao_informado";
+          const equipamento = device
+            ? `${device.tipo ?? ""} ${device.marca ?? ""} ${
+                device.modelo ?? ""
+              }`.trim()
+            : "";
+
+          const total = os.totalFinal ?? os.subtotal ?? 0;
+          const valorPago = os.valorPago ?? 0;
+
+          return [
+            os.numero,
+            statusLabel[os.status],
+            payLabel[payStatus],
+            cliente?.nome ?? "",
+            cliente?.telefonePrincipal ?? "",
+            equipamento,
+            total.toString().replace(".", ","),
+            valorPago.toString().replace(".", ","),
+            formatDate(os.dataAbertura),
+            formatDate(os.dataConclusao),
+            formatDate(os.dataPagamento),
+          ];
+        });
+
+        const csvContent =
+          "\uFEFF" +
+          [header, ...rows]
+            .map((cols) =>
+              cols
+                .map((c) => {
+                  const v = c ?? "";
+                  return `"${String(v).replace(/"/g, '""')}"`;
+                })
+                .join(";")
+            )
+            .join("\n");
+
+        const blob = new Blob([csvContent], {
+          type: "text/csv;charset=utf-8;",
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        const hoje = new Date().toISOString().slice(0, 10);
+
+        link.href = url;
+        link.setAttribute("download", `ordens-servico-${hoje}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
       });
 
-      const csvContent =
-        "\uFEFF" +
-        [header, ...rows]
-          .map((cols) =>
-            cols
-              .map((c) => {
-                const v = c ?? "";
-                return `"${String(v).replace(/"/g, '""')}"`;
-              })
-              .join(";")
-          )
-          .join("\n");
-
-      const blob = new Blob([csvContent], {
-        type: "text/csv;charset=utf-8;",
-      });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      const hoje = new Date().toISOString().slice(0, 10);
-
-      link.href = url;
-      link.setAttribute("download", `ordens-servico-${hoje}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      toast.success("CSV exportado com sucesso.");
+      showToast("CSV exportado com sucesso.", "success");
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao exportar CSV. Tente novamente.");
-    } finally {
-      setIsExporting(false);
+      showToast("Erro ao exportar CSV. Tente novamente.", "error");
     }
   }
 

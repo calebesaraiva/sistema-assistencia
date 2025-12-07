@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useOrders } from "../../context/OrdersContext";
 import type { OrderStatus } from "../../types/domain";
-import { toast } from "../../utils/toast";
+import { useUiFeedback } from "../../hooks/useUiFeedback";
 
 const statusLabels: Record<OrderStatus, string> = {
   aberta: "Aberta",
@@ -34,12 +34,21 @@ const PRIORITARIAS: OrderStatus[] = [
   "em_andamento",
 ];
 
+function formatDate(iso?: string) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("pt-BR");
+}
+
 export default function TechDashboard() {
   const { orders, clients, devices, updateOrderStatus } = useOrders();
+  const { showToast, withLoading } = useUiFeedback();
 
   const [statusFilter, setStatusFilter] = useState<"" | OrderStatus>("");
   const [search, setSearch] = useState("");
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   // ====== MÉTRICAS RÁPIDAS ======
   const metrics = useMemo(() => {
@@ -108,11 +117,16 @@ export default function TechDashboard() {
 
     try {
       setUpdatingOrderId(orderId);
-      await updateOrderStatus(orderId, status);
-      toast.success("Status da OS atualizado com sucesso!");
+      await withLoading(setIsUpdatingStatus, async () => {
+        await updateOrderStatus(orderId, status);
+      });
+      showToast("Status da OS atualizado com sucesso!", "success");
     } catch (error) {
       console.error(error);
-      toast.error("Não foi possível atualizar o status. Tente novamente.");
+      showToast(
+        "Não foi possível atualizar o status. Tente novamente.",
+        "error"
+      );
     } finally {
       setUpdatingOrderId(null);
     }
@@ -270,9 +284,7 @@ export default function TechDashboard() {
 
                   {/* Data abertura */}
                   <td className="px-4 py-2 text-slate-200">
-                    {os.dataAbertura
-                      ? new Date(os.dataAbertura).toLocaleDateString("pt-BR")
-                      : "—"}
+                    {formatDate(os.dataAbertura)}
                   </td>
 
                   {/* Ações */}
@@ -286,20 +298,28 @@ export default function TechDashboard() {
 
                     <button
                       type="button"
-                      disabled={updatingOrderId === os.id}
+                      disabled={
+                        isUpdatingStatus && updatingOrderId === os.id
+                      }
                       className="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-blue-500/60 bg-blue-600/20 text-blue-100 hover:bg-blue-600/30 disabled:opacity-60 disabled:cursor-not-allowed"
                       onClick={() => handleStatusChange(os.id, "em_andamento")}
                     >
-                      Em andamento
+                      {isUpdatingStatus && updatingOrderId === os.id
+                        ? "Atualizando..."
+                        : "Em andamento"}
                     </button>
 
                     <button
                       type="button"
-                      disabled={updatingOrderId === os.id}
+                      disabled={
+                        isUpdatingStatus && updatingOrderId === os.id
+                      }
                       className="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-emerald-500/60 bg-emerald-600/20 text-emerald-100 hover:bg-emerald-600/30 disabled:opacity-60 disabled:cursor-not-allowed"
                       onClick={() => handleStatusChange(os.id, "finalizada")}
                     >
-                      Finalizar
+                      {isUpdatingStatus && updatingOrderId === os.id
+                        ? "Atualizando..."
+                        : "Finalizar"}
                     </button>
                   </td>
                 </tr>

@@ -41,7 +41,7 @@ export default function AdminClients() {
 
     try {
       await withLoading(setIsSavingClient, async () => {
-        createClient({
+        await createClient({
           nome,
           telefonePrincipal: tel1,
           telefoneSecundario: tel2,
@@ -74,7 +74,7 @@ export default function AdminClients() {
 
     try {
       await withLoading(setIsSavingDevice, async () => {
-        createDevice({
+        await createDevice({
           clientId: owner,
           tipo,
           marca,
@@ -106,17 +106,16 @@ export default function AdminClients() {
     try {
       await withLoading(setIsSavingUser, async () => {
         // Apenas visual/mock por enquanto
-        console.log("Usuário mock:", {
-          userNome,
-          userEmail,
-          userRole,
-        });
+        await Promise.resolve(
+          console.log("Usuário mock:", {
+            userNome,
+            userEmail,
+            userRole,
+          })
+        );
       });
 
-      showToast(
-        `Usuário mock criado: ${userNome} (${userRole})`,
-        "info"
-      );
+      showToast(`Usuário mock criado: ${userNome} (${userRole})`, "info");
 
       setUserNome("");
       setUserEmail("");

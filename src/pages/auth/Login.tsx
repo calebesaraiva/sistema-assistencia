@@ -1,107 +1,144 @@
+// src/pages/auth/Login.tsx
+import type { FormEvent } from "react";
 import { useState } from "react";
-import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { toast } from "../../utils/toast";
+import { useAuth } from "../../context/AuthContext";
+import { useUiFeedback } from "../../hooks/useUiFeedback";
 
 export default function Login() {
-  const { loginAs } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
+  const { showToast, withLoading } = useUiFeedback();
 
-  const [loading, setLoading] = useState<"cliente" | "tecnico" | "adm" | null>(null);
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  async function handleLogin(role: "cliente" | "tecnico" | "adm") {
-    if (loading) return; // bloqueia spam de clique
-    setLoading(role);
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (isSubmitting) return;
+
+    if (!email.trim() || !senha.trim()) {
+      showToast("Preencha o e-mail e a senha.", "error");
+      return;
+    }
 
     try {
-      await new Promise((res) => setTimeout(res, 600)); // simula login suave
+      await withLoading(setIsSubmitting, async () => {
+        // autentica usando o AuthContext
+        const user = await login(email.trim().toLowerCase(), senha.trim());
 
-      loginAs(role);
+        if (!user) {
+          // força cair no catch com um erro conhecido
+          throw new Error("INVALID_CREDENTIALS");
+        }
 
-      toast.success(`Bem-vindo! Perfil "${role}" ativado.`);
+        // aqui o TypeScript sabe certinho o tipo de user
+        showToast(`Bem-vindo, ${user.nome}!`, "success");
 
-      if (role === "cliente") navigate("/cliente");
-      if (role === "tecnico") navigate("/tecnico");
-      if (role === "adm") navigate("/adm");
-    } catch {
-      toast.error("Erro ao entrar. Tente novamente.");
-    } finally {
-      setLoading(null);
+        switch (user.role) {
+          case "cliente":
+            navigate("/cliente");
+            break;
+          case "tecnico":
+            navigate("/tecnico");
+            break;
+          case "adm":
+            navigate("/adm");
+            break;
+          case "gerente":
+            navigate("/gerente");
+            break;
+        }
+      });
+    } catch (err: any) {
+      if (err instanceof Error && err.message === "INVALID_CREDENTIALS") {
+        showToast("E-mail ou senha inválidos.", "error");
+      } else {
+        console.error(err);
+        showToast("Erro ao entrar. Tente novamente.", "error");
+      }
     }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-4">
       <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,0.45)] p-8 animate-fade-in">
-
         {/* brilho suave */}
         <div className="pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-tr from-sky-500/20 via-transparent to-indigo-500/10" />
 
-        <div className="relative">
-          <h1 className="text-2xl font-semibold text-center text-slate-50 tracking-tight">
-            Sistema de Assistência Técnica
-          </h1>
+        <div className="relative space-y-6">
+          <div className="text-center space-y-2">
+            <h1 className="text-2xl font-semibold text-slate-50 tracking-tight">
+              Sistema de Assistência Técnica
+            </h1>
+            <p className="text-sm text-slate-400">
+              Acesse com seu usuário e senha para continuar.
+            </p>
+            <p className="text-[11px] text-slate-500 mt-1">
+              Para testes: <br />
+              <span className="font-mono">
+                adm@teste.com / tecnico@teste.com / cliente@teste.com
+              </span>
+              <br />
+              <span className="font-mono">gerente@sistema.com</span>
+              <br />
+              senha: <span className="font-mono">123456</span>
+            </p>
+          </div>
 
-          <p className="text-sm text-slate-400 mt-2 mb-6 text-center">
-            Selecione um perfil para entrar{" "}
-            <span className="inline-flex items-center rounded-full border border-slate-600/60 px-2 py-0.5 text-[11px] font-medium text-slate-300 ml-1">
-              modo teste
-            </span>
-          </p>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* E-mail */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-slate-200">
+                E-mail
+              </label>
+              <input
+                type="email"
+                autoComplete="username"
+                className="w-full rounded-xl px-3 py-2.5 text-sm
+                  bg-slate-900/70 border border-slate-700
+                  text-slate-50 placeholder:text-slate-500
+                  focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-400"
+                placeholder="seuemail@exemplo.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
 
-          <div className="flex flex-col gap-3">
+            {/* Senha */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-slate-200">
+                Senha
+              </label>
+              <input
+                type="password"
+                autoComplete="current-password"
+                className="w-full rounded-xl px-3 py-2.5 text-sm
+                  bg-slate-900/70 border border-slate-700
+                  text-slate-50 placeholder:text-slate-500
+                  focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-400"
+                placeholder="••••••••"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+              />
+            </div>
 
-            {/* CLIENTE */}
+            {/* Botão entrar */}
             <button
-              onClick={() => handleLogin("cliente")}
-              disabled={loading !== null}
-              className="
-                w-full rounded-xl px-4 py-3 text-sm font-medium text-slate-50
+              type="submit"
+              disabled={isSubmitting}
+              className="mt-2 w-full rounded-xl px-4 py-3 text-sm font-medium text-slate-50
                 bg-gradient-to-r from-sky-500 to-indigo-500
                 hover:brightness-110 hover:shadow-lg hover:shadow-sky-500/30
                 active:scale-[0.98]
                 transition-all duration-150
-                disabled:opacity-60 disabled:cursor-not-allowed
-              "
+                disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {loading === "cliente" ? "Entrando..." : "Entrar como Cliente"}
+              {isSubmitting ? "Entrando..." : "Entrar"}
             </button>
-
-            {/* TÉCNICO */}
-            <button
-              onClick={() => handleLogin("tecnico")}
-              disabled={loading !== null}
-              className="
-                w-full rounded-xl px-4 py-3 text-sm font-medium text-slate-100
-                border border-slate-600/70 bg-slate-900/40
-                hover:bg-slate-800/70 hover:border-slate-400/80
-                hover:-translate-y-[1px] active:scale-[0.98]
-                transition-all duration-150
-                disabled:opacity-50 disabled:cursor-not-allowed
-              "
-            >
-              {loading === "tecnico" ? "Entrando..." : "Entrar como Técnico"}
-            </button>
-
-            {/* ADM */}
-            <button
-              onClick={() => handleLogin("adm")}
-              disabled={loading !== null}
-              className="
-                w-full rounded-xl px-4 py-3 text-sm font-medium text-slate-100
-                border border-slate-600/70 bg-slate-900/40
-                hover:bg-slate-800/70 hover:border-slate-400/80
-                hover:-translate-y-[1px] active:scale-[0.98]
-                transition-all duration-150
-                disabled:opacity-50 disabled:cursor-not-allowed
-              "
-            >
-              {loading === "adm" ? "Entrando..." : "Entrar como Administrador"}
-            </button>
-
-          </div>
+          </form>
         </div>
-
       </div>
     </div>
   );

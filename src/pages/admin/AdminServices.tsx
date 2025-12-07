@@ -2,15 +2,17 @@
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { useOrders } from "../../context/OrdersContext";
-import { toast } from "../../utils/toast";
+import { useUiFeedback } from "../../hooks/useUiFeedback";
 
 export default function AdminServices() {
   const { services, createService, updateService, deleteService } = useOrders();
+  const { showToast, withLoading } = useUiFeedback();
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [nome, setNome] = useState("");
   const [valorBase, setValorBase] = useState<number>(0);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   function resetForm() {
@@ -19,36 +21,40 @@ export default function AdminServices() {
     setValorBase(0);
   }
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
     if (!nome.trim() || !valorBase) {
-      toast.error("Preencha o nome e o valor base do serviço.");
+      showToast("Preencha o nome e o valor base do serviço.", "error");
       return;
     }
 
-    setIsSaving(true);
     try {
-      if (editingId) {
-        updateService(editingId, { nome: nome.trim(), valorBase });
-        toast.success("Serviço atualizado com sucesso!");
-      } else {
-        createService({ nome: nome.trim(), valorBase });
-        toast.success("Serviço criado com sucesso!");
-      }
+      await withLoading(setIsSaving, async () => {
+        if (editingId) {
+          await updateService(editingId, { nome: nome.trim(), valorBase });
+        } else {
+          await createService({ nome: nome.trim(), valorBase });
+        }
+      });
+
+      showToast(
+        editingId
+          ? "Serviço atualizado com sucesso!"
+          : "Serviço criado com sucesso!",
+        "success"
+      );
       resetForm();
     } catch (err) {
       console.error(err);
-      toast.error("Ocorreu um erro ao salvar o serviço.");
-    } finally {
-      setIsSaving(false);
+      showToast("Ocorreu um erro ao salvar o serviço.", "error");
     }
   }
 
   function handleEdit(id: string) {
     const serv = services.find((s) => s.id === id);
     if (!serv) {
-      toast.error("Serviço não encontrado.");
+      showToast("Serviço não encontrado.", "error");
       return;
     }
     setEditingId(id);
@@ -56,10 +62,10 @@ export default function AdminServices() {
     setValorBase(serv.valorBase);
   }
 
-  function handleDelete(id: string) {
+  async function handleDelete(id: string) {
     const serv = services.find((s) => s.id === id);
     if (!serv) {
-      toast.error("Serviço não encontrado.");
+      showToast("Serviço não encontrado.", "error");
       return;
     }
 
@@ -68,13 +74,15 @@ export default function AdminServices() {
     );
     if (!ok) return;
 
-    setDeletingId(id);
     try {
-      deleteService(id);
-      toast.success(`Serviço "${serv.nome}" excluído com sucesso.`);
+      setDeletingId(id);
+      await withLoading(setIsDeleting, async () => {
+        await deleteService(id);
+      });
+      showToast(`Serviço "${serv.nome}" excluído com sucesso.`, "success");
     } catch (err) {
       console.error(err);
-      toast.error("Não foi possível excluir o serviço.");
+      showToast("Não foi possível excluir o serviço.", "error");
     } finally {
       setDeletingId(null);
     }
@@ -194,7 +202,7 @@ export default function AdminServices() {
                   <button
                     type="button"
                     onClick={() => handleEdit(s.id)}
-                    disabled={isSaving || deletingId === s.id}
+                    disabled={isSaving || (isDeleting && deletingId === s.id)}
                     className="text-xs px-3 py-1.5 rounded-md border border-slate-600 
                       text-slate-100 bg-slate-900 hover:bg-slate-800 transition
                       disabled:opacity-60 disabled:cursor-not-allowed"
@@ -205,12 +213,14 @@ export default function AdminServices() {
                   <button
                     type="button"
                     onClick={() => handleDelete(s.id)}
-                    disabled={deletingId === s.id || isSaving}
+                    disabled={isSaving || (isDeleting && deletingId === s.id)}
                     className="text-xs px-3 py-1.5 rounded-md border border-rose-500/70 
                       text-rose-300 bg-slate-900 hover:bg-rose-950/60 transition
                       disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    {deletingId === s.id ? "Excluindo..." : "Excluir"}
+                    {isDeleting && deletingId === s.id
+                      ? "Excluindo..."
+                      : "Excluir"}
                   </button>
                 </td>
               </tr>

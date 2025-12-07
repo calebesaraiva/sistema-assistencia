@@ -3,19 +3,35 @@ import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useOrders } from "../../context/OrdersContext";
 import { useNavigate } from "react-router-dom";
-import { toast } from "../../utils/toast";
+import { useUiFeedback } from "../../hooks/useUiFeedback";
 
 export default function AdminNewOrder() {
   const { clients, devices, services, createOrder } = useOrders();
   const navigate = useNavigate();
+  const { showToast, withLoading } = useUiFeedback();
 
-  const [clientId, setClientId] = useState(clients[0]?.id ?? "");
+  const [clientId, setClientId] = useState<string>("");
   const [deviceId, setDeviceId] = useState("");
-  const [serviceId, setServiceId] = useState(services[0]?.id ?? "");
-  const [valor, setValor] = useState(services[0]?.valorBase ?? 0);
+  const [serviceId, setServiceId] = useState<string>("");
+  const [valor, setValor] = useState<number>(0);
   const [defeitoRelatadoCliente, setDefeitoRelatadoCliente] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Quando os clientes chegarem (mock ou API), define o primeiro como padrão se ainda não tiver um selecionado
+  useEffect(() => {
+    if (!clientId && clients.length > 0) {
+      setClientId(clients[0].id);
+    }
+  }, [clients, clientId]);
+
+  // Quando os serviços chegarem (mock ou API), define o primeiro como padrão e já puxa o valor base
+  useEffect(() => {
+    if (!serviceId && services.length > 0) {
+      setServiceId(services[0].id);
+      setValor(services[0].valorBase);
+    }
+  }, [services, serviceId]);
 
   const devicesDoCliente = useMemo(
     () => devices.filter((d) => d.clientId === clientId),
@@ -45,33 +61,31 @@ export default function AdminNewOrder() {
     if (serv) setValor(serv.valorBase);
   }
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
     if (!clientId || !deviceId || !serviceId || !defeitoRelatadoCliente.trim()) {
-      toast.error("Preencha todos os campos obrigatórios.");
+      showToast("Preencha todos os campos obrigatórios.", "error");
       return;
     }
 
     try {
-      setIsSubmitting(true);
-
-      createOrder({
-        clientId,
-        deviceId,
-        serviceId,
-        valor: Number(valor),
-        defeitoRelatadoCliente: defeitoRelatadoCliente.trim(),
-        observacoes: observacoes.trim() || undefined,
+      await withLoading(setIsSubmitting, async () => {
+        await createOrder({
+          clientId,
+          deviceId,
+          serviceId,
+          valor: Number(valor),
+          defeitoRelatadoCliente: defeitoRelatadoCliente.trim(),
+          observacoes: observacoes.trim() || undefined,
+        });
       });
 
-      toast.success("Ordem de serviço criada com sucesso!");
+      showToast("Ordem de serviço criada com sucesso!", "success");
       navigate("/adm/os");
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao criar a OS. Tente novamente.");
-    } finally {
-      setIsSubmitting(false);
+      showToast("Erro ao criar a OS. Tente novamente.", "error");
     }
   }
 

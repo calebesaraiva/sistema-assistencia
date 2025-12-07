@@ -1,3 +1,4 @@
+// src/components/layout/Sidebar.tsx
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import type { UserRole } from "../../types/auth";
@@ -17,6 +18,7 @@ export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const { logout } = useAuth();
 
+  // ===== MENUS POR TIPO DE USUÁRIO =====
   const adminMenu: MenuItem[] = [
     { to: "/adm", label: "Painel" },
     { to: "/adm/os", label: "Ordens de serviço" },
@@ -36,9 +38,31 @@ export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
     { to: "/cliente/historico", label: "Histórico de OS" },
   ];
 
-  let menu: MenuItem[] = adminMenu;
-  if (role === "tecnico") menu = tecnicoMenu;
-  if (role === "cliente") menu = clientMenu;
+  const gerenteMenu: MenuItem[] = [
+  { to: "/gerente", label: "Visão geral do sistema" },
+  { to: "/gerente/lojas", label: "Dashboard lojas" },
+  { to: "/gerente/os", label: "OS (todas lojas)" },
+  { to: "/gerente/usuarios", label: "Usuários / Lojistas" },
+];
+
+  // escolhe o menu pela role
+  let menu: MenuItem[];
+
+  switch (role) {
+    case "tecnico":
+      menu = tecnicoMenu;
+      break;
+    case "cliente":
+      menu = clientMenu;
+      break;
+    case "gerente":
+      menu = gerenteMenu;
+      break;
+    case "adm":
+    default:
+      menu = adminMenu;
+      break;
+  }
 
   const pathname = location.pathname;
 
@@ -78,7 +102,7 @@ export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
           transform transition-transform duration-300
           flex flex-col
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
-          md:translate-x-0   /* em desktop ele fica sempre visível */
+          md:translate-x-0
         `}
       >
         {/* Header */}

@@ -27,6 +27,13 @@ function getStatusColor(status: string) {
   return STATUS_COLOR[status] ?? STATUS_COLOR.default;
 }
 
+function formatDate(iso?: string) {
+  if (!iso) return "-";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "-";
+  return d.toLocaleDateString("pt-BR");
+}
+
 export default function ClientOrders() {
   const { orders, devices } = useOrders();
 
@@ -86,7 +93,7 @@ export default function ClientOrders() {
 
                     <td className="px-4 py-3 text-slate-300 max-w-xs">
                       <span className="line-clamp-2">
-                        {os.defeitoRelatado}
+                        {os.defeitoRelatadoCliente}
                       </span>
                     </td>
 
@@ -97,12 +104,12 @@ export default function ClientOrders() {
                           getStatusColor(os.status)
                         }
                       >
-                        {STATUS_LABEL[os.status]}
+                        {STATUS_LABEL[os.status] ?? os.status}
                       </span>
                     </td>
 
                     <td className="px-4 py-3 text-slate-300">
-                      {new Date(os.dataAbertura).toLocaleDateString("pt-BR")}
+                      {formatDate(os.dataAbertura)}
                     </td>
                   </tr>
                 ))}

@@ -1,14 +1,15 @@
 // src/pages/OrderDetail.tsx
 import { useState, useMemo } from "react";
 import type { FormEvent } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, useParams, Link, useLocation } from "react-router-dom";
 import { useOrders } from "../context/OrdersContext";
 import type { OrderStatus, PaymentStatus } from "../types/domain";
-import { toast } from "../utils/toast"; // <= garante que esse caminho existe
+import { useUiFeedback } from "../hooks/useUiFeedback";
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const {
     orders,
@@ -19,6 +20,8 @@ export default function OrderDetail() {
     updateOrderLaudo,
     updateOrderPayment,
   } = useOrders();
+
+  const { showToast, withLoading } = useUiFeedback();
 
   const ordem = useMemo(
     () => orders.find((o) => o.id === id || o.numero === id),
@@ -67,7 +70,7 @@ export default function OrderDetail() {
 
   const restante = Math.max(totalOs - (valorPagoLocal || 0), 0);
 
-  // flags de loading (não uso disabled pra não mexer no visual)
+  // flags de loading
   const [savingStatus, setSavingStatus] = useState(false);
   const [savingLaudo, setSavingLaudo] = useState(false);
   const [savingPayment, setSavingPayment] = useState(false);
@@ -77,19 +80,22 @@ export default function OrderDetail() {
     if (savingStatus) return;
 
     if (!ordem) {
-      toast.error("Ordem não encontrada.");
+      showToast("Ordem não encontrada.", "error");
       return;
     }
 
     try {
-      setSavingStatus(true);
-      await updateOrderStatus(ordem.id, statusLocal);
-      toast.success("Status atualizado com sucesso!");
+      await withLoading(setSavingStatus, async () => {
+        await updateOrderStatus(ordem.id, statusLocal);
+      });
+
+      showToast("Status atualizado com sucesso!", "success");
     } catch (err) {
       console.error(err);
-      toast.error("Não foi possível atualizar o status. Tente novamente.");
-    } finally {
-      setSavingStatus(false);
+      showToast(
+        "Não foi possível atualizar o status. Tente novamente.",
+        "error"
+      );
     }
   }
 
@@ -97,19 +103,22 @@ export default function OrderDetail() {
     if (savingLaudo) return;
 
     if (!ordem) {
-      toast.error("Ordem não encontrada.");
+      showToast("Ordem não encontrada.", "error");
       return;
     }
 
     try {
-      setSavingLaudo(true);
-      await updateOrderLaudo(ordem.id, laudoLocal);
-      toast.success("Laudo atualizado com sucesso!");
+      await withLoading(setSavingLaudo, async () => {
+        await updateOrderLaudo(ordem.id, laudoLocal);
+      });
+
+      showToast("Laudo atualizado com sucesso!", "success");
     } catch (err) {
       console.error(err);
-      toast.error("Não foi possível atualizar o laudo. Tente novamente.");
-    } finally {
-      setSavingLaudo(false);
+      showToast(
+        "Não foi possível atualizar o laudo. Tente novamente.",
+        "error"
+      );
     }
   }
 
@@ -118,25 +127,26 @@ export default function OrderDetail() {
     if (savingPayment) return;
 
     if (!ordem) {
-      toast.error("Ordem não encontrada.");
+      showToast("Ordem não encontrada.", "error");
       return;
     }
 
     try {
-      setSavingPayment(true);
-
-      await updateOrderPayment(ordem.id, {
-        statusPagamento: statusPagamentoLocal,
-        formaPagamento: formaPagamentoLocal || undefined,
-        valorPago: valorPagoLocal,
+      await withLoading(setSavingPayment, async () => {
+        await updateOrderPayment(ordem.id, {
+          statusPagamento: statusPagamentoLocal,
+          formaPagamento: formaPagamentoLocal || undefined,
+          valorPago: valorPagoLocal,
+        });
       });
 
-      toast.success("Pagamento atualizado com sucesso!");
+      showToast("Pagamento atualizado com sucesso!", "success");
     } catch (err) {
       console.error(err);
-      toast.error("Não foi possível atualizar o pagamento. Tente novamente.");
-    } finally {
-      setSavingPayment(false);
+      showToast(
+        "Não foi possível atualizar o pagamento. Tente novamente.",
+        "error"
+      );
     }
   }
 
@@ -180,7 +190,9 @@ export default function OrderDetail() {
 
           <p className="text-sm text-slate-300 mt-1">
             Criada em{" "}
-            {new Date(ordem.dataAbertura).toLocaleDateString("pt-BR")}
+            {ordem.dataAbertura
+              ? new Date(ordem.dataAbertura).toLocaleDateString("pt-BR")
+              : "-"}
           </p>
         </div>
 
@@ -270,9 +282,10 @@ export default function OrderDetail() {
                 <button
                   type="button"
                   onClick={handleSalvarLaudo}
-                  className="px-3 py-1.5 text-xs rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                  disabled={savingLaudo}
+                  className="px-3 py-1.5 text-xs rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Salvar laudo
+                  {savingLaudo ? "Salvando..." : "Salvar laudo"}
                 </button>
               </div>
             </div>
@@ -363,9 +376,10 @@ export default function OrderDetail() {
             <button
               type="button"
               onClick={handleSalvarStatus}
-              className="w-full mt-3 px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700"
+              disabled={savingStatus}
+              className="w-full mt-3 px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Salvar status
+              {savingStatus ? "Salvando..." : "Salvar status"}
             </button>
           </div>
 
@@ -443,9 +457,10 @@ export default function OrderDetail() {
               <button
                 type="button"
                 onClick={handleSalvarPagamento}
-                className="w-full mt-1 px-3 py-2 text-sm rounded-md bg-emerald-600 text-white hover:bg-emerald-700"
+                disabled={savingPayment}
+                className="w-full mt-1 px-3 py-2 text-sm rounded-md bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Salvar pagamento
+                {savingPayment ? "Salvando..." : "Salvar pagamento"}
               </button>
             </div>
           </div>

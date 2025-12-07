@@ -25,7 +25,6 @@ export type OrderItemType = "servico" | "peca";
 
 export type OrderPhotoType = "entrada" | "durante" | "saida" | "anexo";
 
-
 // =========================
 // CLIENTE
 // =========================
@@ -42,6 +41,7 @@ export interface Address {
 
 export interface Client {
   id: string;
+  lojaId: string;                 // <- loja dona do cliente
   nome: string;
   telefonePrincipal: string;
   telefoneSecundario?: string;
@@ -51,27 +51,26 @@ export interface Client {
   observacoes?: string;
 }
 
-
 // =========================
 // EQUIPAMENTO
 // =========================
 
 export interface Device {
   id: string;
+  lojaId: string;                 // <- loja dona do equipamento
   clientId: string;
-  tipo: string;       // Celular, Notebook, etc.
+  tipo: string;                   // Celular, Notebook, etc.
   marca: string;
   modelo: string;
   cor?: string;
   imeiSerie?: string;
   senhaDesbloqueio?: string;
-  acessoriosEntregues?: string;      // texto livre por enquanto
+  acessoriosEntregues?: string;   // texto livre por enquanto
   condicaoFisicaEntrada?: string;
   possuiOxidacao?: boolean;
   ligavaNaEntrada?: boolean;
   observacoes?: string;
 }
-
 
 // =========================
 // SERVIÇOS (cadastro do ADM)
@@ -79,14 +78,14 @@ export interface Device {
 
 export interface ServiceDefinition {
   id: string;
+  lojaId: string;                 // <- serviço pertence à loja
   nome: string;
   descricao?: string;
-  categoria?: string; // Celular, Notebook, etc.
+  categoria?: string;             // Celular, Notebook, etc.
   valorBase: number;
   prazoEstimadoDias?: number;
   garantiaDiasPadrao?: number;
 }
-
 
 // =========================
 // LOG / HISTÓRICO
@@ -99,7 +98,6 @@ export interface ServiceOrderLog {
   acao: string;           // "STATUS_ALTERADO", "OBS_ADICIONADA", etc.
   descricao: string;
 }
-
 
 // =========================
 // ITENS DA OS (orçamento)
@@ -121,7 +119,6 @@ export interface ServiceOrderItem extends ServiceItem {
   valorTotal?: number;        // se quiser usar no futuro
 }
 
-
 // =========================
 // FOTOS / ANEXOS
 // =========================
@@ -134,13 +131,13 @@ export interface ServiceOrderPhoto {
   criadoEm: string;          // ISO
 }
 
-
 // =========================
 // ORDEM DE SERVIÇO
 // =========================
 
 export interface ServiceOrder {
   id: string;
+  lojaId: string;                  // <- OS pertence à loja
   numero: string;
 
   clientId: string;
@@ -150,7 +147,7 @@ export interface ServiceOrder {
   status: OrderStatus;
   prioridade?: Priority;
 
-  origem?: string;         // loja, whatsapp, site...
+  origem?: string;                 // loja, whatsapp, site...
 
   dataAbertura: string;
   dataPrevisao?: string;
