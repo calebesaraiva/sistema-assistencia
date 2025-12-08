@@ -24,17 +24,27 @@ export default function AdminServices() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
-    if (!nome.trim() || !valorBase) {
-      showToast("Preencha o nome e o valor base do serviço.", "error");
+    if (!nome.trim()) {
+      showToast("Preencha o nome do serviço.", "error");
+      return;
+    }
+    if (!valorBase || Number.isNaN(valorBase) || valorBase <= 0) {
+      showToast("Informe um valor base válido maior que zero.", "error");
       return;
     }
 
     try {
       await withLoading(setIsSaving, async () => {
         if (editingId) {
-          await updateService(editingId, { nome: nome.trim(), valorBase });
+          await updateService(editingId, {
+            nome: nome.trim(),
+            valorBase,
+          });
         } else {
-          await createService({ nome: nome.trim(), valorBase });
+          await createService({
+            nome: nome.trim(),
+            valorBase,
+          });
         }
       });
 
@@ -90,10 +100,16 @@ export default function AdminServices() {
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-8">
-      {/* Título */}
-      <h1 className="text-3xl font-semibold text-white tracking-tight">
-        Serviços
-      </h1>
+      {/* Título / descrição */}
+      <div>
+        <h1 className="text-3xl font-semibold text-white tracking-tight">
+          Serviços da loja
+        </h1>
+        <p className="text-sm text-slate-400 mt-1">
+          Cadastre e gerencie os serviços que podem ser usados nas ordens de
+          serviço desta loja.
+        </p>
+      </div>
 
       {/* Formulário */}
       <form
@@ -133,8 +149,12 @@ export default function AdminServices() {
               bg-slate-900/80 border border-slate-700
               text-slate-100 placeholder:text-slate-500
               focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400"
-            value={valorBase}
-            onChange={(e) => setValorBase(Number(e.target.value))}
+            value={valorBase || ""}
+            onChange={(e) => {
+              const v = Number(e.target.value.replace(",", "."));
+              setValorBase(Number.isNaN(v) ? 0 : v);
+            }}
+            placeholder="Ex: 150,00"
           />
         </div>
 
@@ -193,8 +213,8 @@ export default function AdminServices() {
 
                 <td className="py-3 px-2 text-slate-200">
                   {s.valorBase.toLocaleString("pt-BR", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
+                    style: "currency",
+                    currency: "BRL",
                   })}
                 </td>
 
@@ -232,7 +252,7 @@ export default function AdminServices() {
                   colSpan={3}
                   className="py-6 text-center text-slate-400 text-sm"
                 >
-                  Nenhum serviço cadastrado.
+                  Nenhum serviço cadastrado para esta loja.
                 </td>
               </tr>
             )}

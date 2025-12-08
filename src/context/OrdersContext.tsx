@@ -467,8 +467,9 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
 
     if (user.role === "cliente") {
       // TODO: ligar user.id ao clientId de verdade
-      const clientIdDoUsuario = "c1";
-      result = result.filter((os) => os.clientId === clientIdDoUsuario);
+if (user.role === "cliente" && user.clientId) {
+  result = result.filter((os) => os.clientId === user.clientId);
+}
     }
 
     if (user.role === "tecnico") {

@@ -22,10 +22,12 @@ export default function AdminClients() {
   const [cor, setCor] = useState("");
   const [imei, setImei] = useState("");
 
-  // Estados do novo usuário (visual por enquanto)
+  // Estados do novo usuário (mock visual)
   const [userNome, setUserNome] = useState("");
   const [userEmail, setUserEmail] = useState("");
-  const [userRole, setUserRole] = useState("cliente");
+  const [userRole, setUserRole] = useState<"adm" | "tecnico" | "cliente">(
+    "cliente"
+  );
 
   // loading dos botões
   const [isSavingClient, setIsSavingClient] = useState(false);
@@ -34,7 +36,7 @@ export default function AdminClients() {
 
   // --------- Ações ---------
   async function handleSaveClient() {
-    if (!nome || !tel1) {
+    if (!nome.trim() || !tel1.trim()) {
       showToast("Preencha nome e telefone principal.", "error");
       return;
     }
@@ -42,11 +44,11 @@ export default function AdminClients() {
     try {
       await withLoading(setIsSavingClient, async () => {
         await createClient({
-          nome,
-          telefonePrincipal: tel1,
-          telefoneSecundario: tel2,
-          email,
-          cpfCnpj: cpf,
+          nome: nome.trim(),
+          telefonePrincipal: tel1.trim(),
+          telefoneSecundario: tel2.trim() || undefined,
+          email: email.trim() || undefined,
+          cpfCnpj: cpf.trim() || undefined,
         });
       });
 
@@ -64,7 +66,7 @@ export default function AdminClients() {
   }
 
   async function handleSaveDevice() {
-    if (!owner || !tipo || !marca || !modelo) {
+    if (!owner || !tipo.trim() || !marca.trim() || !modelo.trim()) {
       showToast(
         "Preencha todos os campos obrigatórios do equipamento.",
         "error"
@@ -76,11 +78,11 @@ export default function AdminClients() {
       await withLoading(setIsSavingDevice, async () => {
         await createDevice({
           clientId: owner,
-          tipo,
-          marca,
-          modelo,
-          cor,
-          imeiSerie: imei,
+          tipo: tipo.trim(),
+          marca: marca.trim(),
+          modelo: modelo.trim(),
+          cor: cor.trim() || undefined,
+          imeiSerie: imei.trim() || undefined,
         });
       });
 
@@ -98,7 +100,7 @@ export default function AdminClients() {
   }
 
   async function handleSaveUser() {
-    if (!userNome || !userEmail) {
+    if (!userNome.trim() || !userEmail.trim()) {
       showToast("Preencha nome e e-mail do usuário.", "error");
       return;
     }
@@ -107,7 +109,7 @@ export default function AdminClients() {
       await withLoading(setIsSavingUser, async () => {
         // Apenas visual/mock por enquanto
         await Promise.resolve(
-          console.log("Usuário mock:", {
+          console.log("Usuário mock (apenas visual):", {
             userNome,
             userEmail,
             userRole,
@@ -126,7 +128,6 @@ export default function AdminClients() {
     }
   }
 
-  // --------- JSX ---------
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Cabeçalho */}
@@ -135,7 +136,8 @@ export default function AdminClients() {
           Clientes, equipamentos e usuários
         </h1>
         <p className="text-sm text-slate-400 mt-1">
-          Cadastre clientes, vincule equipamentos e crie usuários do sistema.
+          Cadastre clientes, vincule equipamentos e gerencie usuários da sua
+          loja.
         </p>
       </div>
 
@@ -239,14 +241,18 @@ export default function AdminClients() {
 
           <button
             onClick={handleSaveDevice}
-            disabled={isSavingDevice}
+            disabled={isSavingDevice || !clients.length}
             className="w-full bg-slate-900 text-slate-50 text-sm font-medium rounded-lg px-4 py-2 mt-1 border border-slate-600 hover:bg-slate-800 hover:border-slate-400 active:scale-[0.98] transition disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {isSavingDevice ? "Salvando..." : "Salvar equipamento"}
+            {isSavingDevice
+              ? "Salvando..."
+              : !clients.length
+              ? "Cadastre um cliente primeiro"
+              : "Salvar equipamento"}
           </button>
         </div>
 
-        {/* CARD 3 - NOVO USUÁRIO */}
+        {/* CARD 3 - NOVO USUÁRIO (mock) */}
         <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-5 shadow-[0_18px_60px_rgba(0,0,0,0.55)] space-y-3">
           <h2 className="text-lg font-semibold text-slate-50 mb-1">
             Novo usuário
@@ -267,7 +273,9 @@ export default function AdminClients() {
           <select
             className="w-full rounded-lg px-3 py-2 text-sm bg-slate-900/70 border border-slate-700/80 text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-400/80"
             value={userRole}
-            onChange={(e) => setUserRole(e.target.value)}
+            onChange={(e) =>
+              setUserRole(e.target.value as "adm" | "tecnico" | "cliente")
+            }
           >
             <option value="adm">Administrador</option>
             <option value="tecnico">Técnico</option>
@@ -283,8 +291,8 @@ export default function AdminClients() {
           </button>
 
           <p className="text-xs text-slate-400 mt-1">
-            * Nesta versão, o cadastro de usuário é apenas visual. Depois podemos
-            integrar com o backend de autenticação.
+            * Nesta versão, o cadastro de usuário é apenas visual. Depois vamos
+            integrar com o backend de autenticação e permissões.
           </p>
         </div>
       </div>

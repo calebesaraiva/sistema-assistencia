@@ -53,20 +53,28 @@ export default function TechDashboard() {
   // ====== MÉTRICAS RÁPIDAS ======
   const metrics = useMemo(() => {
     const total = orders.length;
-    const diagnostico = orders.filter((o) => o.status === "diagnostico").length;
+
+    const diagnosticoOuAprovacao = orders.filter(
+      (o) =>
+        o.status === "diagnostico" ||
+        o.status === "aguardando_aprovacao"
+    ).length;
+
     const aguardandoPeca = orders.filter(
       (o) => o.status === "aguardando_peca"
     ).length;
+
     const emAndamento = orders.filter(
       (o) => o.status === "em_andamento"
     ).length;
+
     const finalizadasOuEntregues = orders.filter((o) =>
       ["finalizada", "entregue"].includes(o.status)
     ).length;
 
     return {
       total,
-      diagnostico,
+      diagnosticoOuAprovacao,
       aguardandoPeca,
       emAndamento,
       finalizadasOuEntregues,
@@ -160,7 +168,7 @@ export default function TechDashboard() {
             Em diagnóstico / aguard. aprova.
           </p>
           <p className="mt-1 text-2xl font-semibold text-amber-50">
-            {metrics.diagnostico}
+            {metrics.diagnosticoOuAprovacao}
           </p>
         </div>
 
@@ -298,9 +306,7 @@ export default function TechDashboard() {
 
                     <button
                       type="button"
-                      disabled={
-                        isUpdatingStatus && updatingOrderId === os.id
-                      }
+                      disabled={isUpdatingStatus && updatingOrderId === os.id}
                       className="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-blue-500/60 bg-blue-600/20 text-blue-100 hover:bg-blue-600/30 disabled:opacity-60 disabled:cursor-not-allowed"
                       onClick={() => handleStatusChange(os.id, "em_andamento")}
                     >
@@ -311,9 +317,7 @@ export default function TechDashboard() {
 
                     <button
                       type="button"
-                      disabled={
-                        isUpdatingStatus && updatingOrderId === os.id
-                      }
+                      disabled={isUpdatingStatus && updatingOrderId === os.id}
                       className="inline-flex items-center text-xs px-3 py-1.5 rounded-md border border-emerald-500/60 bg-emerald-600/20 text-emerald-100 hover:bg-emerald-600/30 disabled:opacity-60 disabled:cursor-not-allowed"
                       onClick={() => handleStatusChange(os.id, "finalizada")}
                     >

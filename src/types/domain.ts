@@ -41,7 +41,7 @@ export interface Address {
 
 export interface Client {
   id: string;
-  lojaId: string;                 // <- loja dona do cliente
+  lojaId: string;                
   nome: string;
   telefonePrincipal: string;
   telefoneSecundario?: string;

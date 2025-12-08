@@ -28,6 +28,7 @@ import AdminUsers from "../pages/admin/AdminUsers";
 import ManagerDashboard from "../pages/manager/ManagerDashboard";
 import ManagerStoresDashboard from "../pages/manager/ManagerStoresDashboard";
 import ManagerOrdersAll from "../pages/manager/ManagerOrdersAll";
+import ManagerUsersStores from "../pages/manager/ManagerUsersStores";
 
 // OS (compartilhadas)
 import OrderDetail from "../pages/OrderDetail";
@@ -293,6 +294,17 @@ export default function AppRoutes() {
     </PrivateRoute>
   }
 />
+<Route
+  path="/gerente/usuarios-lojistas"
+  element={
+    <PrivateRoute roles={["gerente"]}>
+      <AppLayout role="gerente">
+        <ManagerUsersStores />
+      </AppLayout>
+    </PrivateRoute>
+  }
+/>
+
 
 
       {/* ========== CATCH-ALL ========== */}

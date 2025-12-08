@@ -68,6 +68,7 @@ export default function AdminDashboard() {
 
     const abertas = orders.filter((o) => o.status === "aberta").length;
     const emAndamento = orders.filter((o) => o.status === "em_andamento").length;
+
     const finalizadasOuEntregues = orders.filter((o) =>
       ["finalizada", "entregue"].includes(o.status)
     ).length;
@@ -104,8 +105,9 @@ export default function AdminDashboard() {
   const [periodo, setPeriodo] = useState<Periodo>("30d");
 
   const resumoPeriodo = useMemo(() => {
+    const { start, end } = getPeriodoRange(periodo);
+
     if (!orders.length) {
-      const { start, end } = getPeriodoRange(periodo);
       return {
         start,
         end,
@@ -115,8 +117,6 @@ export default function AdminDashboard() {
         recebidoPeriodo: 0,
       };
     }
-
-    const { start, end } = getPeriodoRange(periodo);
 
     const osAbertasPeriodo = orders.filter((o) => {
       if (!o.dataAbertura) return false;
@@ -182,13 +182,11 @@ export default function AdminDashboard() {
           <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
             Total de OS
           </p>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-semibold text-slate-50">
-              {totalOs}
-            </span>
-          </div>
+          <p className="mt-2 text-2xl font-semibold text-slate-50">
+            {totalOs}
+          </p>
           <p className="mt-2 text-xs text-slate-400">
-            Todas as ordens registradas no sistema.
+            Todas as ordens registradas.
           </p>
         </button>
 
@@ -201,13 +199,9 @@ export default function AdminDashboard() {
           <p className="text-xs font-medium uppercase tracking-wide text-sky-400">
             OS abertas
           </p>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-semibold text-slate-50">
-              {abertas}
-            </span>
-          </div>
+          <p className="mt-2 text-2xl font-semibold text-slate-50">{abertas}</p>
           <p className="mt-2 text-xs text-slate-400">
-            Aguardando diagnóstico ou início do serviço.
+            Aguardando início ou diagnóstico.
           </p>
         </button>
 
@@ -220,17 +214,13 @@ export default function AdminDashboard() {
           <p className="text-xs font-medium uppercase tracking-wide text-amber-300">
             Em andamento
           </p>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-semibold text-slate-50">
-              {emAndamento}
-            </span>
-          </div>
-          <p className="mt-2 text-xs text-slate-400">
-            Em bancada ou aguardando peças/retorno.
+          <p className="mt-2 text-2xl font-semibold text-slate-50">
+            {emAndamento}
           </p>
+          <p className="mt-2 text-xs text-slate-400">Em bancada ou aguardando peças.</p>
         </button>
 
-        {/* Finalizadas / Entregues */}
+        {/* Finalizadas */}
         <button
           type="button"
           onClick={() => navigate("/adm/os?status=concluidas")}
@@ -239,43 +229,31 @@ export default function AdminDashboard() {
           <p className="text-xs font-medium uppercase tracking-wide text-emerald-300">
             Finalizadas / entregues
           </p>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-semibold text-slate-50">
-              {finalizadasOuEntregues}
-            </span>
-          </div>
+          <p className="mt-2 text-2xl font-semibold text-slate-50">
+            {finalizadasOuEntregues}
+          </p>
           <p className="mt-2 text-xs text-slate-400">
-            Serviços concluídos e em garantia/cobrança.
+            Serviços concluídos.
           </p>
         </button>
 
-        {/* Faturamento previsto (geral) */}
+        {/* Faturamento previsto */}
         <div className="rounded-2xl border border-slate-800 bg-slate-900 px-4 py-4 shadow-sm md:col-span-2 xl:col-span-2">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
             Faturamento previsto (geral)
           </p>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-semibold text-slate-50">
-              {formatCurrency(faturamentoPrevistoGeral)}
-            </span>
-          </div>
-          <p className="mt-2 text-xs text-slate-400">
-            Soma do valor final de todas as OS cadastradas.
+          <p className="mt-2 text-2xl font-semibold text-slate-50">
+            {formatCurrency(faturamentoPrevistoGeral)}
           </p>
         </div>
 
-        {/* Faturamento recebido (geral) */}
+        {/* Faturamento recebido */}
         <div className="rounded-2xl border border-emerald-500/50 bg-slate-900 px-4 py-4 shadow-sm md:col-span-1 xl:col-span-2">
           <p className="text-xs font-medium uppercase tracking-wide text-emerald-300">
             Faturamento recebido (geral)
           </p>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-semibold text-emerald-200">
-              {formatCurrency(faturamentoPagoGeral)}
-            </span>
-          </div>
-          <p className="mt-2 text-xs text-slate-400">
-            Somente OS com pagamento lançado.
+          <p className="mt-2 text-2xl font-semibold text-emerald-200">
+            {formatCurrency(faturamentoPagoGeral)}
           </p>
         </div>
       </div>
@@ -288,8 +266,7 @@ export default function AdminDashboard() {
               Resumo financeiro por período
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Baseado na data de abertura (previsto) e na data de pagamento
-              (recebido).
+              Baseado na data de abertura (previsto) e pagamento (recebido).
             </p>
             <p className="text-xs text-slate-500 mt-0.5">
               {`De ${formatDate(resumoPeriodo.start.toISOString())} até ${formatDate(
@@ -315,7 +292,7 @@ export default function AdminDashboard() {
 
         <div className="mt-4 grid gap-3 md:grid-cols-4">
           <div className="rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-3">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+            <p className="text-[11px] uppercase text-slate-400">
               OS abertas no período
             </p>
             <p className="mt-1 text-xl font-semibold text-slate-50">
@@ -324,7 +301,7 @@ export default function AdminDashboard() {
           </div>
 
           <div className="rounded-xl border border-emerald-500/60 bg-emerald-950/60 px-3 py-3">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-emerald-200">
+            <p className="text-[11px] uppercase text-emerald-200">
               OS pagas no período
             </p>
             <p className="mt-1 text-xl font-semibold text-emerald-100">
@@ -333,7 +310,7 @@ export default function AdminDashboard() {
           </div>
 
           <div className="rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-3">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+            <p className="text-[11px] uppercase text-slate-400">
               Previsto no período
             </p>
             <p className="mt-1 text-lg font-semibold text-slate-50">
@@ -342,7 +319,7 @@ export default function AdminDashboard() {
           </div>
 
           <div className="rounded-xl border border-emerald-500/60 bg-emerald-950/60 px-3 py-3">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-emerald-200">
+            <p className="text-[11px] uppercase text-emerald-200">
               Recebido no período
             </p>
             <p className="mt-1 text-lg font-semibold text-emerald-100">
@@ -374,7 +351,7 @@ export default function AdminDashboard() {
 
         {ultimasOs.length === 0 ? (
           <div className="px-4 py-10 text-center text-sm text-slate-400">
-            Nenhuma OS cadastrada ainda. Comece criando uma nova ordem.
+            Nenhuma OS cadastrada ainda.
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -398,6 +375,7 @@ export default function AdminDashboard() {
                     <td className="px-4 py-3 font-medium text-slate-50">
                       {os.numero}
                     </td>
+
                     <td className="px-4 py-3">
                       <span
                         className={
@@ -414,17 +392,19 @@ export default function AdminDashboard() {
                         {os.status.replace("_", " ")}
                       </span>
                     </td>
+
                     <td className="px-4 py-3 text-slate-300">
                       {formatDate(os.dataAbertura)}
                     </td>
+
                     <td className="px-4 py-3 text-slate-50">
                       {formatCurrency(os.totalFinal)}
                     </td>
+
                     <td className="px-4 py-3 text-slate-300">
-                      {os.valorPago && os.valorPago > 0
-                        ? formatCurrency(os.valorPago)
-                        : "—"}
+                      {os.valorPago ? formatCurrency(os.valorPago) : "—"}
                     </td>
+
                     <td className="px-4 py-3 text-right">
                       <Link
                         to={`/adm/os/${os.id}`}

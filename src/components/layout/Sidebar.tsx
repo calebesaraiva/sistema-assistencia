@@ -42,7 +42,7 @@ export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
   { to: "/gerente", label: "Visão geral do sistema" },
   { to: "/gerente/lojas", label: "Dashboard lojas" },
   { to: "/gerente/os", label: "OS (todas lojas)" },
-  { to: "/gerente/usuarios", label: "Usuários / Lojistas" },
+  { to: "/gerente/usuarios-lojistas", label: "Usuários / Lojistas" },
 ];
 
   // escolhe o menu pela role
